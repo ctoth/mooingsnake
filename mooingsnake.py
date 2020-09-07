@@ -47,6 +47,7 @@ class PythonToMoo:
       ast.Is: self.convert_eq, # for now
       ast.And: self.convert_and,
       ast.Not: self.convert_not,
+      ast.Compare: self.convert_comparison,
     }
 
   def convert_verb(self, node):
@@ -115,13 +116,13 @@ class PythonToMoo:
       converter(node, )
 
   def convert_eq(self, node):
-    output.write("==")
+    self.output.write("==")
 
   def convert_lt(self, node):
-    output.write("<")
+    self.output.write("<")
 
   def convert_gt(self, node):
-    output.write(">")
+    self.output.write(">")
 
   def convert_and(self, node):
     self.output.write("&&")
@@ -132,8 +133,16 @@ class PythonToMoo:
   def convert_not(self, node):
     self.output.write("!")
 
+  def convert_comparison(self, node):
+    self.convert_const(node.left)
+    for subop in node.ops:
+      for subnode in node.comparators:
+        self.convert_node(subop)
+        self.convert_node(subnode)
+
   def default_converter(self, node):
-    pdb.set_trace()
+    if self.debug:
+      pdb.set_trace()
     
   @classmethod
   def convert_file(cls, fname, output):
