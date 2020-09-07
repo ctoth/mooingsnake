@@ -44,6 +44,9 @@ class PythonToMoo:
       ast.Eq: self.convert_eq,
       ast.Lt: self.convert_lt,
       ast.Gt: self.convert_gt,
+      ast.Is: self.convert_eq, # for now
+      ast.And: self.convert_and,
+      ast.Not: self.convert_not,
     }
 
   def convert_verb(self, node):
@@ -119,6 +122,15 @@ class PythonToMoo:
 
   def convert_gt(self, node):
     output.write(">")
+
+  def convert_and(self, node):
+    self.output.write("&&")
+
+  def convert_or(self, node):
+    self.output.write("||")
+
+  def convert_not(self, node):
+    self.output.write("!")
 
   def default_converter(self, node):
     pdb.set_trace()
