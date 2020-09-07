@@ -39,6 +39,7 @@ class PythonToMoo:
       ast.If: self.convert_if,
       ast.For: self.convert_for,
       ast.Break: self.convert_break,
+      ast.NameConstant: self.convert_const,
     }
 
   def convert_verb(self, node):
@@ -88,6 +89,15 @@ class PythonToMoo:
 
   def convert_break(self, node):
     self.output.write("break;\n")
+
+  def convert_const(self, node):
+    value = node.value
+    if value is True:
+      self.output.write('true');
+    elif value is False:
+      self.output.write("false");
+    else:
+      raise RuntimeError("Don't know how to write value %r" % value)
 
   def convert_node(self, node):
     node_type = type(node)
