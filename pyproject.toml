@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "mooingsnake"
+version = "0.1.0"
+description = "Convert python code to moo"
+authors = ["CTot <q@randomemail.com>, NicklasTegner <NicklasMCHD@live.dk>, Tsp <tsp@allinaccess.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+attrs = "^20.2.0"
+pytest = "^6.0.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
