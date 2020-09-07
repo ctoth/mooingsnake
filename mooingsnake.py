@@ -30,7 +30,6 @@ class Context:
 class PythonToMoo:
   output = attr()
   context = attr(default=Factory(Context))
-  debug = attr(default=False)
 
   def __attrs_post_init__(self):
     """Register converters here"""
@@ -42,6 +41,9 @@ class PythonToMoo:
       ast.For: self.convert_for,
       ast.Break: self.convert_break,
       ast.NameConstant: self.convert_const,
+      ast.Eq: self.convert_eq,
+      ast.Lt: self.convert_lt,
+      ast.Gt: self.convert_gt,
     }
 
   def convert_verb(self, node):
@@ -109,15 +111,22 @@ class PythonToMoo:
       logger.debug("Found converter %r", converter)
       converter(node, )
 
+  def convert_eq(self, node):
+    output.write("==")
+
+  def convert_lt(self, node):
+    output.write("<")
+
+  def convert_gt(self, node):
+    output.write(">")
+
   def default_converter(self, node):
-    if not self.debug:
-      return
     pdb.set_trace()
     
   @classmethod
-  def convert_file(cls, fname, output, debug=False):
+  def convert_file(cls, fname, output):
     loaded = load_ast(fname)
-    new = cls(output, debug=debug)
+    new = cls(output)
     for node in loaded.body:
       new.convert_node(node)
 
@@ -129,7 +138,7 @@ def main(args):
     logger.setLevel(logging.DEBUG)
   else:
     logger.setLevel(logging.INFO)
-  PythonToMoo.convert_file(args.input, OUTPUT, args.debug)
+  PythonToMoo.convert_file(args.input, OUTPUT)
   OUTPUT.seek(0)
   if args.output is None:
     logger.info("Done")
