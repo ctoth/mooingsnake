@@ -19,8 +19,11 @@ def convert_verb(node, context, output):
   obj_name = context.current_obj
   default_args = DEFAULT_VERB_ARGS
   default_perms = DEFAULT_VERB_PERMS
-  output.write("@verb {obj_name}:{verb_name} {default_args} {default_perms}\n".format(**locals()))
   context.verb = verb_name
+  output.write("@verb {obj_name}:{verb_name} {default_args} {default_perms}\n".format(**locals()))
+  for subnode in node.body:
+    convert_node(subnode, context, output)
+  output.write(".\n")
 
 def convert_obj(node, context, output):
   class_name = node.name
@@ -60,6 +63,7 @@ def convert_break(node, context, output):
   output.write("break;\n")
 
 CONVERTERS = {
+  ast.ClassDef: convert_obj,
   ast.FunctionDef: convert_verb,
   ast.While: convert_while,
   ast.If: convert_if,
