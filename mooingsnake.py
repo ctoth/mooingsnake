@@ -51,6 +51,7 @@ class PythonToMoo:
       ast.And: self.convert_and,
       ast.Not: self.convert_not,
       ast.Compare: self.convert_comparison,
+      ast.BoolOp: self.convert_multi_comparison,
     }
 
   def convert_verb(self, node):
@@ -148,6 +149,11 @@ class PythonToMoo:
       for subnode in node.comparators:
         self.convert_node(subop)
         self.convert_node(subnode)
+
+  def convert_multi_comparison(self, node):
+    self.convert_node(node.values[0])
+    self.convert_node(node.op)
+    self.convert_node(node.values[1])
 
   def default_converter(self, node):
     if self.debug:
