@@ -1,10 +1,10 @@
+import argparse
 import ast
 import io
+import os
 import sys
 
 from attr import attr, attributes, Factory
-
-OUTPUT = io.StringIO()
 
 DEFAULT_VERB_ARGS = 'tnt'
 DEFAULT_VERB_PERMS = 'RXD'
@@ -96,10 +96,23 @@ class PythonToMoo:
     for node in loaded.body:
       new.convert_node(node)
 
-def main(fname):
-  PythonToMoo.convert_file(fname, OUTPUT)
+def main(args):
+  if os.path.isfile(args.input) == False:
+    raise RuntimeError("Input file {} not found.".format(args.input))
+  OUTPUT = io.StringIO()
+  PythonToMoo.convert_file(args.input, OUTPUT)
   OUTPUT.seek(0)
-  print(OUTPUT.read())
+  if args.output is None:
+    print(OUTPUT.read())
+    return
+  else:
+    with open(args.output, "w") as f:
+      f.write(OUTPUT.read())
 
 if __name__ == '__main__':
-  main(sys.argv[1])
+  parser = argparse.ArgumentParser()
+  parser.add_argument("-i", "--input", help="Python file to convert to moo code", action="store", required=True)
+  parser.add_argument("-o", "--output", help="File to write the moo code. If not specified, prints to moo code to the console.", action="store")
+  parser.add_argument("-d", "--debug", help="Enable debug mode", action="store_true")
+  args = parser.parse_args()
+  main(args)
