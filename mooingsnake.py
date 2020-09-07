@@ -1,3 +1,6 @@
+from logging import getLogger
+logger = getLogger("Transpiler")
+
 import ast
 import io
 import sys
@@ -85,8 +88,10 @@ class PythonToMoo:
 
   def convert_node(self, node):
     node_type = type(node)
+    logger.debug("Parsing node type: %r", node_type)
     converter = self.converters.get(node_type)
     if callable(converter):
+      logger.debug("Found converter %r", converter)
       converter(node, )
 
   @classmethod
