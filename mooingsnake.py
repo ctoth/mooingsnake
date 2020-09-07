@@ -27,20 +27,44 @@ def convert_obj(node, context, output):
   output.write("@create #1 named {class_name}\n".format(**locals()))
   context.current_obj = class_name
 
+def convert_scoped_node(node, context, start_token, end_token, output):
+  output.write(start_token + " (")
+  convert_node(node.test, context, output)
+  output.write(")\n")
+  for subnode in node.body:
+    convert_node(subnode, context, output)
+  output.write(end_token + "\n")
+
 def convert_while(node, context, output):
   if context.current_obj is None and context.verb is None:
     raise RuntimeError("While loop not supported out of class or function.")
   if context.verb is None:
     raise RuntimeError("Loop not supported out of function call.")
-  output.write("while ({0})\n".format(node.test.value))
-  for subnode in node.body:
-    convert_node(subnode, context, output)
-  output.write("endwhile\n")
+  convert_scoped_node(node, context, "while", "endwhile", output)
 
+def convert_if(node, context, output):
+  if context.current_obj is None and context.verb is None:
+    raise RuntimeError("If statement not supported out of class or function.")
+  if context.verb is None:
+    raise RuntimeError("If not supported out of function call.")
+  convert_scoped_node(node, context, "if", "endif", output)
+
+def convert_for(node, context, output):
+  if context.current_obj is None and context.verb is None:
+    raise RuntimeError("for loop not supported out of class or function.")
+  if context.verb is None:
+    raise RuntimeError("For loop not supported out of function call.")
+  convert_scoped_node(node, context, "if", "endif", output)
+
+def convert_break(node, context, output):
+  output.write("break;\n")
 
 CONVERTERS = {
   ast.FunctionDef: convert_verb,
   ast.While: convert_while,
+  ast.If: convert_if,
+  ast.For: convert_for,
+  ast.Break: convert_break,
 }
 
 def convert_node(node, context, output):
