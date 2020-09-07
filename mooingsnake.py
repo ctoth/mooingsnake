@@ -43,7 +43,9 @@ class PythonToMoo:
       ast.NameConstant: self.convert_const,
       ast.Eq: self.convert_eq,
       ast.Lt: self.convert_lt,
+      ast.LtE: self.convert_lte,
       ast.Gt: self.convert_gt,
+      ast.GtE: self.convert_gte,
       ast.Is: self.convert_eq, # for now
       ast.And: self.convert_and,
       ast.Not: self.convert_not,
@@ -123,6 +125,12 @@ class PythonToMoo:
   def convert_gt(self, node):
     output.write(">")
 
+  def convert_gte(self, node):
+    self.output.write(">=")
+
+  def convert_lte(self, node):
+    self.output.write("<=")
+
   def convert_and(self, node):
     self.output.write("&&")
 
@@ -133,8 +141,9 @@ class PythonToMoo:
     self.output.write("!")
 
   def default_converter(self, node):
-    pdb.set_trace()
-    
+    if self.debug
+      pdb.set_trace()
+
   @classmethod
   def convert_file(cls, fname, output):
     loaded = load_ast(fname)
