@@ -4,7 +4,13 @@ import io
 import os
 import sys
 
+import logging
+from logging import getLogger
+logger = getLogger("Transpiler")
 from attr import attr, attributes, Factory
+
+logger = getLogger("Transpiler")
+logger.addHandler(logging.StreamHandler())
 
 DEFAULT_VERB_ARGS = 'tnt'
 DEFAULT_VERB_PERMS = 'RXD'
@@ -85,8 +91,10 @@ class PythonToMoo:
 
   def convert_node(self, node):
     node_type = type(node)
+    logger.debug("Parsing node type: %r", node_type)
     converter = self.converters.get(node_type)
     if callable(converter):
+      logger.debug("Found converter %r", converter)
       converter(node, )
 
   @classmethod
@@ -100,14 +108,20 @@ def main(args):
   if os.path.isfile(args.input) == False:
     raise RuntimeError("Input file {} not found.".format(args.input))
   OUTPUT = io.StringIO()
+  if args.debug:
+    logger.setLevel(logging.DEBUG)
+  else:
+    logger.setLevel(logging.INFO)
   PythonToMoo.convert_file(args.input, OUTPUT)
   OUTPUT.seek(0)
   if args.output is None:
+    logger.info("Done")
     print(OUTPUT.read())
     return
   else:
     with open(args.output, "w") as f:
       f.write(OUTPUT.read())
+    logger.info("Wrote {}".format(args.output))
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()

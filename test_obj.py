@@ -7,3 +7,9 @@ def test_loop():
     if True == True:
       test = "hello"
     break
+
+  def test_builtins():
+    test = float(0.0)
+    test2 = hex(1)
+    test3 = len([1, 2, 3])
+    
