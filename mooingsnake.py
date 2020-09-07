@@ -69,7 +69,6 @@ CONVERTERS = {
 
 def convert_node(node, context, output):
   node_type = type(node)
-  print(node_type)
   converter = CONVERTERS.get(node_type)
   if callable(converter):
     converter(node, context, output)
@@ -82,7 +81,7 @@ class Context:
 def convert_file(fname, output):
   loaded = load_ast(fname)
   context = Context()
-  for node in ast.walk(loaded):
+  for node in loaded.body:
     convert_node(node, context, output)
 
 def main(fname):
