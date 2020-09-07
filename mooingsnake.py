@@ -2,6 +2,7 @@ import argparse
 import ast
 import io
 import os
+import pdb
 import sys
 
 import logging
@@ -29,6 +30,7 @@ class Context:
 class PythonToMoo:
   output = attr()
   context = attr(default=Factory(Context))
+  debug = attr(default=False)
 
   def __attrs_post_init__(self):
     """Register converters here"""
@@ -102,15 +104,20 @@ class PythonToMoo:
   def convert_node(self, node):
     node_type = type(node)
     logger.debug("Parsing node type: %r", node_type)
-    converter = self.converters.get(node_type)
+    converter = self.converters.get(node_type, self.default_converter)
     if callable(converter):
       logger.debug("Found converter %r", converter)
       converter(node, )
 
+  def default_converter(self, node):
+    if not self.debug:
+      return
+    pdb.set_trace()
+    
   @classmethod
-  def convert_file(cls, fname, output):
+  def convert_file(cls, fname, output, debug=False):
     loaded = load_ast(fname)
-    new = cls(output)
+    new = cls(output, debug=debug)
     for node in loaded.body:
       new.convert_node(node)
 
@@ -122,7 +129,7 @@ def main(args):
     logger.setLevel(logging.DEBUG)
   else:
     logger.setLevel(logging.INFO)
-  PythonToMoo.convert_file(args.input, OUTPUT)
+  PythonToMoo.convert_file(args.input, OUTPUT, args.debug)
   OUTPUT.seek(0)
   if args.output is None:
     logger.info("Done")
