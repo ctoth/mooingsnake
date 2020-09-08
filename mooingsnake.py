@@ -72,6 +72,7 @@ class PythonToMoo:
     default_perms = DEFAULT_VERB_PERMS
     self.context.verb = verb_name
     self.output.write("@verb {obj_name}:{verb_name} {default_args} {default_perms}\n".format(**locals()))
+    self.output.write("@program {obj_name}:{verb_name}\n".format(**locals()))
     self.convert_node(node.args)
     for subnode in node.body:
       self.convert_node(subnode, )
