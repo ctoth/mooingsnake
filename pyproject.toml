@@ -2,7 +2,7 @@
 name = "mooingsnake"
 version = "0.1.0"
 description = "Convert python code to moo"
-authors = ["CTot <q@randomemail.com>, NicklasTegner <NicklasMCHD@live.dk>, Tsp <tsp@allinaccess.com>"]
+authors = ["Christopher Toth <q.alpha@gmail.com>, NicklasTegner <NicklasMCHD@live.dk>, Tsp <tsp@allinaccess.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
