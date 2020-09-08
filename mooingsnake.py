@@ -43,12 +43,14 @@ class PythonToMoo:
       ast.Break: self.convert_break,
       ast.NameConstant: self.convert_const,
       ast.Eq: self.convert_eq,
+      ast.NotEq: self.convert_not_eq,
       ast.Lt: self.convert_lt,
       ast.LtE: self.convert_lte,
       ast.Gt: self.convert_gt,
       ast.GtE: self.convert_gte,
       ast.Is: self.convert_eq, # for now
       ast.And: self.convert_and,
+      ast.Or: self.convert_or,
       ast.Not: self.convert_not,
       ast.Compare: self.convert_comparison,
       ast.Name: self.convert_name,
@@ -125,6 +127,9 @@ class PythonToMoo:
   def convert_eq(self, node):
     self.output.write("==")
 
+  def convert_not_eq(self, node):
+    self.output.write("!=")
+
   def convert_lt(self, node):
     self.output.write("<")
 
@@ -147,7 +152,7 @@ class PythonToMoo:
     self.output.write("!")
 
   def convert_comparison(self, node):
-    self.convert_const(node.left)
+    self.convert_node(node.left)
     for subop in node.ops:
       for subnode in node.comparators:
         self.convert_node(subop)
