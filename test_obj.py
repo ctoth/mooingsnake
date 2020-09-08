@@ -4,7 +4,7 @@ class Test(object):
 
 def test_loop():
   while True:
-    if True == True and False == False or "hi" == 2:
+    if True == True and False == False or "hi" != "lol123":
       test = "hello"
     break
 
