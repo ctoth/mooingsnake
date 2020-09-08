@@ -55,6 +55,9 @@ class PythonToMoo:
       ast.Compare: self.convert_comparison,
       ast.Name: self.convert_name,
       ast.Assign: self.convert_assign,
+      ast.BinOp: self.convert_bin_op,
+      ast.Add: self.convert_add,
+      ast.Mult: self.convert_mult,
       ast.Str: self.convert_str,
       ast.BoolOp: self.convert_multi_comparison,
       ast.Return: self.convert_return,
@@ -169,7 +172,20 @@ class PythonToMoo:
       self.convert_node(target)
       self.output.write(" = ")
     self.convert_node(node.value)
-    self.output.write(";\n");
+    self.output.write(";\n")
+
+  def convert_bin_op(self, node):
+    self.convert_node(node.left)
+    self.output.write(" ")
+    self.convert_node(node.op)
+    self.output.write(" ")
+    self.convert_node(node.right)
+
+  def convert_add(self, node):
+    self.output.write("+")
+
+  def convert_mult(self, node):
+    self.output.write("*")
 
   def convert_str(self, node):
     self.output.write("\"" + node.s + "\"")
