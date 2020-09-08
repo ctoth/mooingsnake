@@ -60,6 +60,8 @@ class PythonToMoo:
       ast.Mult: self.convert_mult,
       ast.Str: self.convert_str,
       ast.Num: self.convert_num,
+      ast.List: self.convert_list,
+      ast.Subscript: self.convert_subscript,
       ast.BoolOp: self.convert_multi_comparison,
       ast.Return: self.convert_return,
       ast.arguments: self.convert_args,
@@ -196,6 +198,18 @@ class PythonToMoo:
 
   def convert_num(self, node):
     self.output.write(str(node.n))
+
+  def convert_list(self, node):
+    self.output.write("{")
+    for elt in node.elts:
+      self.convert_node(elt)
+      self.output.write(", ")
+    self.output.write("}")
+
+  def convert_subscript(self, node):
+    self.output.write(node.value.id + "[")
+    self.output.write(str(node.slice.value.n + 1))
+    self.output.write("]")
 
   def convert_multi_comparison(self, node):
     self.output.write("(")
