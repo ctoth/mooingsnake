@@ -59,8 +59,10 @@ class PythonToMoo:
       ast.Add: self.convert_add,
       ast.Mult: self.convert_mult,
       ast.Str: self.convert_str,
+      ast.Num: self.convert_num,
       ast.BoolOp: self.convert_multi_comparison,
       ast.Return: self.convert_return,
+      ast.arguments: self.convert_args,
     }
 
   def convert_verb(self, node):
@@ -70,6 +72,7 @@ class PythonToMoo:
     default_perms = DEFAULT_VERB_PERMS
     self.context.verb = verb_name
     self.output.write("@verb {obj_name}:{verb_name} {default_args} {default_perms}\n".format(**locals()))
+    self.convert_node(node.args)
     for subnode in node.body:
       self.convert_node(subnode, )
     self.output.write(".\n")
@@ -190,6 +193,8 @@ class PythonToMoo:
   def convert_str(self, node):
     self.output.write("\"" + node.s + "\"")
 
+  def convert_num(self, node):
+    self.output.write(str(node.n))
 
   def convert_multi_comparison(self, node):
     self.output.write("(")
@@ -204,6 +209,21 @@ class PythonToMoo:
     self.output.write("return ")
     self.convert_node(node.value)
     self.output.write(";\n")
+
+  def convert_args(self, node):
+    positional = node.args[:len(node.args) - len(node.defaults)]
+    positional = [i.arg for i in positional]
+    defaults = node.args[len(positional):]
+    defaults = {i.arg : node.defaults[n] for n, i in enumerate(defaults)}
+    if not positional and not defaults:
+          return
+    self.output.write("{")
+    for p in positional:
+      self.output.write(p + ", ")
+    for d, subnode in defaults.items():
+      self.output.write("?" + d + "=")
+      self.convert_node(subnode)
+    self.output.write("} = args;\n")
 
   def default_converter(self, node):
     if self.debug:
