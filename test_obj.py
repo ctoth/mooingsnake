@@ -1,12 +1,13 @@
-class Test(object):
-  def test_function(a, b, c=3):
-    return a + b * c
 
 def test_loop():
   while True:
     if True == True and False == False or "hi" != "lol123":
       test = "hello"
     break
+
+class Test(object):
+  def test_function(a, b, c=3):
+    return a + b * c
 
   def test_builtins():
     test = float(0.0)

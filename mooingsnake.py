@@ -91,7 +91,7 @@ class PythonToMoo:
     self.convert_scoped_node(node, "while", "endwhile")
 
   def convert_if(self, node):
-    if self.context.current_obj is None and context.verb is None:
+    if self.context.current_obj is None and self.context.verb is None:
       raise RuntimeError("If statement not supported out of class or function.")
     if self.context.verb is None:
       raise RuntimeError("If not supported out of function call.")
