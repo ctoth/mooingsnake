@@ -161,6 +161,7 @@ class PythonToMoo:
       self.convert_node(target)
       self.output.write(" = ")
     self.convert_node(node.value)
+    self.output.write(";\n");
 
   def convert_str(self, node):
     self.output.write("\"" + node.s + "\"")
