@@ -203,7 +203,7 @@ class PythonToMoo:
   def convert_return(self, node):
     self.output.write("return ")
     self.convert_node(node.value)
-    self.output.write(";")
+    self.output.write(";\n")
 
   def default_converter(self, node):
     if self.debug:
