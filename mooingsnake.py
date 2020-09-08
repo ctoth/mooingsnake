@@ -51,6 +51,9 @@ class PythonToMoo:
       ast.And: self.convert_and,
       ast.Not: self.convert_not,
       ast.Compare: self.convert_comparison,
+      ast.Name: self.convert_name,
+      ast.Assign: self.convert_assign,
+      ast.Str: self.convert_str,
     }
 
   def convert_verb(self, node):
@@ -149,6 +152,18 @@ class PythonToMoo:
         self.convert_node(subop)
         self.convert_node(subnode)
 
+  def convert_name(self, node):
+    self.output.write(node.id)
+
+  def convert_assign(self, node):
+    for target in node.targets:
+      self.convert_node(target)
+      self.output.write(" = ")
+    self.convert_node(node.value)
+
+  def convert_str(self, node):
+    self.output.write("\"" + node.s + "\"")
+    
   def default_converter(self, node):
     if self.debug:
       pdb.set_trace()
