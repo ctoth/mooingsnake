@@ -57,6 +57,7 @@ class PythonToMoo:
       ast.Assign: self.convert_assign,
       ast.Str: self.convert_str,
       ast.BoolOp: self.convert_multi_comparison,
+      ast.Return: self.convert_return,
     }
 
   def convert_verb(self, node):
@@ -182,6 +183,11 @@ class PythonToMoo:
     self.output.write("(")
     self.convert_node(node.values[1])
     self.output.write(")")
+
+  def convert_return(self, node):
+    self.output.write("return ")
+    self.convert_node(node.value)
+    self.output.write(";")
 
   def default_converter(self, node):
     if self.debug:
