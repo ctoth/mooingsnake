@@ -116,7 +116,15 @@ class PythonToMoo:
       raise RuntimeError("for loop not supported out of class or function.")
     if self.context.verb is None:
       raise RuntimeError("For loop not supported out of function call.")
-    self.convert_scoped_node(node, "if", "endif")
+    self.output.write("for ")
+    self.convert_node(node.target)
+    self.output.write(" in ")
+    self.output.write("(")
+    if node.iter.value:
+      self.convert_node(node.iter.value)
+      self.output.write(".")
+    self.convert_node(node.iter.attr)
+    self.output.write(")\n")
 
   def convert_break(self, node):
     self.output.write("break;\n")
@@ -127,6 +135,8 @@ class PythonToMoo:
       self.output.write('true');
     elif value is False:
       self.output.write("false");
+    elif value is None:
+      self.output.write("$nothing")
     else:
       raise RuntimeError("Don't know how to write value %r" % value)
 
