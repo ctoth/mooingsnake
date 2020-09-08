@@ -173,9 +173,13 @@ class PythonToMoo:
 
 
   def convert_multi_comparison(self, node):
+    self.output.write("(")
     self.convert_node(node.values[0])
+    self.output.write(")")
     self.convert_node(node.op)
+    self.output.write("(")
     self.convert_node(node.values[1])
+    self.output.write(")")
 
   def default_converter(self, node):
     if self.debug:
