@@ -74,6 +74,8 @@ class PythonToMoo:
     class_name = node.name
     self.output.write("@create #1 named {class_name}\n".format(**locals()))
     self.context.current_obj = class_name
+    for subnode in node.body:
+      self.convert_node(subnode)
 
   def convert_scoped_node(self, node, start_token, end_token):
     self.output.write(start_token + " (")
