@@ -258,7 +258,7 @@ def main(args):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument("-i", "--input", help="Python file to convert to moo code", action="store", required=True)
-  parser.add_argument("-o", "--output", help="File to write the moo code. If not specified, prints to moo code to the console.", action="store")
+  parser.add_argument("-o", "--output", help="File to write the moo code. If not specified, prints to the console.", action="store")
   parser.add_argument("-d", "--debug", help="Enable debug mode", action="store_true")
   args = parser.parse_args()
   main(args)
