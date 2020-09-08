@@ -57,7 +57,9 @@ class PythonToMoo:
       ast.Assign: self.convert_assign,
       ast.BinOp: self.convert_bin_op,
       ast.Add: self.convert_add,
+      ast.Sub: self.convert_sub,
       ast.Mult: self.convert_mult,
+      ast.Div: self.convert_div,
       ast.Str: self.convert_str,
       ast.Num: self.convert_num,
       ast.List: self.convert_list,
@@ -190,8 +192,14 @@ class PythonToMoo:
   def convert_add(self, node):
     self.output.write("+")
 
+  def convert_sub(self, node):
+    self.output.write("-")
+
   def convert_mult(self, node):
     self.output.write("*")
+
+  def convert_div(self, node):
+    self.output.write("/")
 
   def convert_str(self, node):
     self.output.write("\"" + node.s + "\"")
