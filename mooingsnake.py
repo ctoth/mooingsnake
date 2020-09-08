@@ -54,6 +54,7 @@ class PythonToMoo:
       ast.Name: self.convert_name,
       ast.Assign: self.convert_assign,
       ast.Str: self.convert_str,
+      ast.BoolOp: self.convert_multi_comparison,
     }
 
   def convert_verb(self, node):
@@ -163,7 +164,13 @@ class PythonToMoo:
 
   def convert_str(self, node):
     self.output.write("\"" + node.s + "\"")
-    
+
+
+  def convert_multi_comparison(self, node):
+    self.convert_node(node.values[0])
+    self.convert_node(node.op)
+    self.convert_node(node.values[1])
+
   def default_converter(self, node):
     if self.debug:
       pdb.set_trace()
