@@ -50,6 +50,7 @@ class PythonToMoo:
       ast.Gt: self.convert_gt,
       ast.GtE: self.convert_gte,
       ast.Is: self.convert_eq, # for now
+      ast.IsNot: self.convert_not_eq, # for now
       ast.And: self.convert_and,
       ast.Or: self.convert_or,
       ast.Not: self.convert_not,
