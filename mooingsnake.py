@@ -73,6 +73,7 @@ class PythonToMoo:
       ast.Return: self.convert_return,
       ast.Attribute: self.convert_attribute,
       ast.arguments: self.convert_args,
+      ast.Call: self.convert_call,
     }
 
   def convert_verb(self, node):
@@ -321,6 +322,18 @@ class PythonToMoo:
     self.convert_node(node.value)
     self.output.write(".")
     self.output.write(node.attr)
+
+  def convert_call(self, node):
+    self.convert_name(node.func)
+    self.output.write("(")
+    for arg in node.args:
+      self.convert_node(arg)
+      self.output.write(", ")
+    for kwarg in node.keywords:
+      self.output.write(kwarg.arg)
+      self.convert_node(kwarg.value)
+      self.output.write(", ")
+    self.output.write(");\n")
 
   def default_converter(self, node):
     if self.debug:
