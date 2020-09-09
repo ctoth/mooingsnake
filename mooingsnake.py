@@ -13,9 +13,15 @@ from attr import attr, attributes, Factory
 
 logger = getLogger("Transpiler")
 logger.addHandler(logging.StreamHandler())
-DEFAULT_VERB_ARGS = 'tnt'
 
+DEFAULT_VERB_ARGS = 'tnt'
 DEFAULT_VERB_PERMS = 'RXD'
+transformations_table = {
+  'self': 'this',
+  'str': 'tostr',
+  'float': 'tofloat',
+  'len': 'length',
+}
 
 def load_ast(fname):
   with open(fname) as f:
@@ -75,7 +81,6 @@ class PythonToMoo:
       ast.Attribute: self.convert_attribute,
       ast.arguments: self.convert_args,
       ast.Call: self.convert_call,
-      ast.Import: self.resolve_import,
     }
 
   def convert_verb(self, node):
@@ -203,10 +208,7 @@ class PythonToMoo:
 
   @staticmethod
   def transform_name(name):
-    transformations = {
-      'self': 'this',
-    }
-    return transformations.get(name, name)
+    return transformations_table.get(name, name)
 
   def convert_assign(self, node):
     if self.context.current_obj is not None and not self.context.verb:
@@ -335,17 +337,6 @@ class PythonToMoo:
       self.convert_node(kwarg.value)
       self.output.write(", ")
     self.output.write(")")
-
-  def resolve_import(self, node):
-    for impnode in node.names:
-      impname = impnode.name
-      try:
-        i = importlib.import_module("module_resolvers.{}".format(impname))
-      except ModuleNotFoundError as mnfe:
-        logger.warning(mnfe)
-        if self.debug:
-          pdb.set_trace()
-      
 
   def default_converter(self, node):
     if self.debug:

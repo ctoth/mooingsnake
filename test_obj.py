@@ -1,4 +1,3 @@
-import math
 
 def test_loop():
   while True:
@@ -16,6 +15,7 @@ class Test(object):
     return message
 
   def test_builtins():
+    test = str("hello")
     test = float(0.0)
     test2 = hex(1)
     test3 = len([1, 2, 3])
