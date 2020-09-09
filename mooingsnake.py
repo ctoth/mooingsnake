@@ -61,6 +61,7 @@ class PythonToMoo:
       ast.Sub: self.convert_sub,
       ast.Mult: self.convert_mult,
       ast.Div: self.convert_div,
+      ast.Mod: self.convert_mod,
       ast.Str: self.convert_str,
       ast.Num: self.convert_num,
       ast.List: self.convert_list,
@@ -127,6 +128,9 @@ class PythonToMoo:
       self.output.write(".")
     self.output.write(node.iter.attr)
     self.output.write(")\n")
+    for subnode in node.body:
+      self.convert_node(subnode, )
+    self.output.write("endfor\n")
 
   def convert_break(self, node):
     self.output.write("break;\n")
@@ -220,6 +224,9 @@ class PythonToMoo:
   def convert_div(self, node):
     self.output.write("/")
 
+  def convert_mod(self, node):
+    self.output.write("%")
+
   def convert_str(self, node):
     self.output.write("\"" + node.s + "\"")
 
@@ -234,7 +241,8 @@ class PythonToMoo:
     self.output.write("}")
 
   def convert_subscript(self, node):
-    self.output.write(node.value.id + "[")
+    self.convert_node(node.value)
+    self.output.write("[")
     self.output.write(str(node.slice.value.n + 1))
     self.output.write("]")
 
