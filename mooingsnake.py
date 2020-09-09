@@ -197,7 +197,15 @@ class PythonToMoo:
         self.convert_node(subnode)
 
   def convert_name(self, node):
-    self.output.write(node.id)
+    new_name = self.transform_name(node.id)
+    self.output.write(new_name)
+
+  @staticmethod
+  def transform_name(name):
+    transformations = {
+      'self': 'this',
+    }
+    return transformations.get(name, name)
 
   def convert_assign(self, node):
     for target in node.targets:
@@ -281,7 +289,11 @@ class PythonToMoo:
     defaults = node.args[len(positional):]
     defaults = {i.arg : node.defaults[n] for n, i in enumerate(defaults)}
     if not positional and not defaults:
-          return
+      return
+    if positional and positional[0] == 'self':
+      positional = positional[1:]
+    if not positional and not defaults:
+      return
     self.output.write("{")
     for p in positional:
       self.output.write(p + ", ")
