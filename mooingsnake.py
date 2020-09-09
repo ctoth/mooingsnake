@@ -55,6 +55,7 @@ class PythonToMoo:
       ast.Compare: self.convert_comparison,
       ast.Name: self.convert_name,
       ast.Assign: self.convert_assign,
+      ast.AugAssign: self.convert_aug_assign,
       ast.BinOp: self.convert_bin_op,
       ast.Add: self.convert_add,
       ast.Sub: self.convert_sub,
@@ -66,6 +67,7 @@ class PythonToMoo:
       ast.Subscript: self.convert_subscript,
       ast.BoolOp: self.convert_multi_comparison,
       ast.Return: self.convert_return,
+      ast.Attribute: self.convert_attribute,
       ast.arguments: self.convert_args,
     }
 
@@ -123,7 +125,7 @@ class PythonToMoo:
     if node.iter.value:
       self.convert_node(node.iter.value)
       self.output.write(".")
-    self.convert_node(node.iter.attr)
+    self.output.write(node.iter.attr)
     self.output.write(")\n")
 
   def convert_break(self, node):
@@ -192,6 +194,13 @@ class PythonToMoo:
     self.convert_node(node.value)
     self.output.write(";\n")
 
+  def convert_aug_assign(self, node):
+    self.convert_node(node.target)
+    self.output.write(" = ")
+    self.convert_node(node.target)
+    self.convert_node(node.op)
+    self.convert_node(node.value)
+
   def convert_bin_op(self, node):
     self.convert_node(node.left)
     self.output.write(" ")
@@ -257,6 +266,11 @@ class PythonToMoo:
       self.output.write("?" + d + "=")
       self.convert_node(subnode)
     self.output.write("} = args;\n")
+
+  def convert_attribute(self, node):
+    self.convert_node(node.value)
+    self.output.write(".")
+    self.output.write(node.attr)
 
   def default_converter(self, node):
     if self.debug:
