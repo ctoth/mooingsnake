@@ -127,10 +127,7 @@ class PythonToMoo:
     self.convert_node(node.target)
     self.output.write(" in ")
     self.output.write("(")
-    if node.iter.value:
-      self.convert_node(node.iter.value)
-      self.output.write(".")
-    self.output.write(node.iter.attr)
+    self.convert_node(node.iter)
     self.output.write(")\n")
     for subnode in node.body:
       self.convert_node(subnode, )
@@ -280,10 +277,10 @@ class PythonToMoo:
     self.output.write("]")
 
   def convert_slice(self, node):
-    if type(node.value) == ast.Num:
+    if hasattr(node, 'value') and type(node.value) == ast.Num:
      self.output.write(node.value.n + 1)
     else:
-     self.convert_node(node.value)
+     self.default_converter(node)
      
   def convert_multi_comparison(self, node):
     self.output.write("(")
@@ -311,8 +308,10 @@ class PythonToMoo:
     if not positional and not defaults:
       return
     self.output.write("{")
-    for p in positional:
-      self.output.write(p + ", ")
+    for n, p in enumerate(positional):
+      self.output.write(p)
+      if n < len(positional) - 1:
+        self.output.write(", ")
     for d, subnode in defaults.items():
       self.output.write("?" + d + "=")
       self.convert_node(subnode)
