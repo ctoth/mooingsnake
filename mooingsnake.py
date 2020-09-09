@@ -188,9 +188,11 @@ class PythonToMoo:
 
   def convert_comparison(self, node):
     self.convert_node(node.left)
+    self.output.write(" ")
     for subop in node.ops:
       for subnode in node.comparators:
         self.convert_node(subop)
+        self.output.write(" ")
         self.convert_node(subnode)
 
   def convert_name(self, node):
