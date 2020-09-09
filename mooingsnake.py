@@ -41,6 +41,7 @@ class PythonToMoo:
       ast.If: self.convert_if,
       ast.For: self.convert_for,
       ast.Break: self.convert_break,
+      ast.Continue: self.convert_continue,
       ast.NameConstant: self.convert_const,
       ast.Eq: self.convert_eq,
       ast.NotEq: self.convert_not_eq,
@@ -53,6 +54,7 @@ class PythonToMoo:
       ast.Or: self.convert_or,
       ast.Not: self.convert_not,
       ast.Compare: self.convert_comparison,
+      ast.Slice: self.convert_slice,
       ast.Name: self.convert_name,
       ast.Assign: self.convert_assign,
       ast.AugAssign: self.convert_aug_assign,
@@ -135,6 +137,9 @@ class PythonToMoo:
   def convert_break(self, node):
     self.output.write("break;\n")
 
+  def convert_continue(self, node):
+    self.output.write("continue;\n")
+
   def convert_const(self, node):
     value = node.value
     if value is True:
@@ -204,6 +209,7 @@ class PythonToMoo:
     self.convert_node(node.target)
     self.convert_node(node.op)
     self.convert_node(node.value)
+    self.output.write(";\n");
 
   def convert_bin_op(self, node):
     self.convert_node(node.left)
@@ -243,9 +249,15 @@ class PythonToMoo:
   def convert_subscript(self, node):
     self.convert_node(node.value)
     self.output.write("[")
-    self.output.write(str(node.slice.value.n + 1))
+    self.convert_node(node.slice)
     self.output.write("]")
 
+  def convert_slice(self, node):
+    if type(node.value) == ast.Num:
+     self.output.write(node.value.n + 1)
+    else:
+     self.convert_node(node.value)
+     
   def convert_multi_comparison(self, node):
     self.output.write("(")
     self.convert_node(node.values[0])
