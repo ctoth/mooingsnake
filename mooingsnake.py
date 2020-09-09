@@ -87,6 +87,7 @@ class PythonToMoo:
     for subnode in node.body:
       self.convert_node(subnode, )
     self.output.write(".\n")
+    self.context.verb = ""
 
   def convert_obj(self, node):
     class_name = node.name
@@ -208,11 +209,26 @@ class PythonToMoo:
     return transformations.get(name, name)
 
   def convert_assign(self, node):
-    for target in node.targets:
-      self.convert_node(target)
+    if self.context.current_obj is not None and not self.context.verb:
+      self.add_property(node)
+    else:
+      for target in node.targets:
+        self.convert_node(target)
+        self.output.write(" = ")
+      self.convert_node(node.value)
+      self.output.write(";\n")
+
+  def add_property(self, node):
+    obj = self.context.current_obj
+    for prop in node.targets:
+      self.output.write("@property {obj}.".format(**locals()))
+      self.convert_node(prop)
+      self.output.write("\n")
+      self.output.write(";{obj}.".format(**locals()))
+      self.convert_node(prop)
       self.output.write(" = ")
-    self.convert_node(node.value)
-    self.output.write(";\n")
+      self.convert_node(node.value)
+      self.output.write(";\n")
 
   def convert_aug_assign(self, node):
     self.convert_node(node.target)
