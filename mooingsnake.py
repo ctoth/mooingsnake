@@ -324,16 +324,15 @@ class PythonToMoo:
     self.output.write(node.attr)
 
   def convert_call(self, node):
-    self.convert_name(node.func)
+    self.convert_node(node.func)
     self.output.write("(")
     for arg in node.args:
       self.convert_node(arg)
       self.output.write(", ")
     for kwarg in node.keywords:
-      self.output.write(kwarg.arg)
       self.convert_node(kwarg.value)
       self.output.write(", ")
-    self.output.write(");\n")
+    self.output.write(")")
 
   def default_converter(self, node):
     if self.debug:
