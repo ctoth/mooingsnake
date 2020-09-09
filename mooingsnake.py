@@ -4,6 +4,7 @@ import io
 import os
 import pdb
 import sys
+import importlib
 
 import logging
 from logging import getLogger
@@ -12,8 +13,8 @@ from attr import attr, attributes, Factory
 
 logger = getLogger("Transpiler")
 logger.addHandler(logging.StreamHandler())
-
 DEFAULT_VERB_ARGS = 'tnt'
+
 DEFAULT_VERB_PERMS = 'RXD'
 
 def load_ast(fname):
@@ -74,6 +75,7 @@ class PythonToMoo:
       ast.Attribute: self.convert_attribute,
       ast.arguments: self.convert_args,
       ast.Call: self.convert_call,
+      ast.Import: self.resolve_import,
     }
 
   def convert_verb(self, node):
@@ -333,6 +335,17 @@ class PythonToMoo:
       self.convert_node(kwarg.value)
       self.output.write(", ")
     self.output.write(")")
+
+  def resolve_import(self, node):
+    for impnode in node.names:
+      impname = impnode.name
+      try:
+        i = importlib.import_module("module_resolvers.{}".format(impname))
+      except ModuleNotFoundError as mnfe:
+        logger.warning(mnfe)
+        if self.debug:
+          pdb.set_trace()
+      
 
   def default_converter(self, node):
     if self.debug:
