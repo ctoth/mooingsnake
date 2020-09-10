@@ -342,9 +342,9 @@ class PythonToMoo:
     """
 
   def convert_attribute(self, node):
-    self.convert_node(node.value)
+    self.convert_node(node.expr)
     self.output.write(".")
-    self.output.write(node.attr)
+    self.output.write(node.attrname)
 
   def convert_call(self, node):
     self.convert_node(node.func)
