@@ -150,10 +150,6 @@ class PythonToMoo:
       self.output.write("&&")
     elif value is "or":
       self.output.write("||")
-    elif value is "is":
-      self.output.write("==")
-    elif value is "not":
-      self.output.write("!")
     else:
       if isinstance(value, str):
         self.output.write("\""+str(value)+"\"")
@@ -248,10 +244,14 @@ class PythonToMoo:
     self.output.write(str(node.n))
 
   def convert_list(self, node):
+    if not node.elts:
+      self.output.write("{}")
+      return
     self.output.write("{")
-    for elt in node.elts:
+    for elt in node.elts[:-1]:
       self.convert_node(elt)
       self.output.write(", ")
+    self.convert_node(elt[-1])
     self.output.write("}")
 
   def convert_subscript(self, node):
@@ -313,15 +313,19 @@ class PythonToMoo:
     self.context.in_function_call = True
     self.convert_node(node.func)
     self.context.in_function_call = False
-    self.output.write("(")
+    arguments = []
     if node.args is not None:
-      for arg in node.args:
-        self.convert_node(arg)
-        self.output.write(", ")
+      arguments.extend(node.args)
     if node.keywords is not None:
-      for kwarg in node.keywords:
-        self.convert_node(kwarg.value)
-        self.output.write(", ")
+      arguments.extend(i.value for i in node.keywords)
+    if not arguments:
+      self.output.write("()");
+      return
+    self.output.write("(")
+    for arg in arguments[:-1]:
+      self.convert_node(arg)
+      self.output.write(", ")
+    self.convert_node(arguments[-1])
     self.output.write(")")
 
   def default_converter(self, node):
