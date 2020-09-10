@@ -24,7 +24,7 @@ transformations_table = {
 }
 
 def load_ast(fname):
-  with open(fname) as f:
+  with open(fname, encoding='UTF-8') as f:
     code = f.read()
   return astroid.parse(code)
 
@@ -116,7 +116,7 @@ class PythonToMoo:
     self.convert_scoped_node(node, "if", "endif")
 
   def convert_for(self, node):
-    if self.context.current_obj is None and context.verb is None:
+    if self.context.current_obj is None and self.context.verb is None:
       raise RuntimeError("for loop not supported out of class or function.")
     if self.context.verb is None:
       raise RuntimeError("For loop not supported out of function call.")
@@ -252,7 +252,7 @@ class PythonToMoo:
     for elt in node.elts[:-1]:
       self.convert_node(elt)
       self.output.write(", ")
-    self.convert_node(elt[-1])
+    self.convert_node(node.elts[-1])
     self.output.write("}")
 
   def convert_subscript(self, node):
@@ -262,11 +262,11 @@ class PythonToMoo:
     self.output.write("]")
 
   def convert_slice(self, node):
-    if hasattr(node, 'value') and type(node.value) == astroid.Num:
-     self.output.write(node.value.n + 1)
-    else:
-     self.default_converter(node)
-     
+    self.convert_node(node.lower)
+    if node.upper:
+      self.output.write(":")
+      self.convert_node(node.upper)
+
   def convert_multi_comparison(self, node):
     self.output.write("(")
     self.convert_node(node.values[0])
