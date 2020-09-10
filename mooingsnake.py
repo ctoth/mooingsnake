@@ -50,17 +50,6 @@ class PythonToMoo:
       astroid.Break: self.convert_break,
       astroid.Continue: self.convert_continue,
       astroid.node_classes.Const: self.convert_const,
-      #astroid.Eq: self.convert_eq,
-      #astroid.NotEq: self.convert_not_eq,
-      #astroid.Lt: self.convert_lt,
-      #astroid.LtE: self.convert_lte,
-      #astroid.Gt: self.convert_gt,
-      #astroid.GtE: self.convert_gte,
-      #astroid.Is: self.convert_eq, # for now
-      #astroid.IsNot: self.convert_not_eq, # for now
-      #astroid.And: self.convert_and,
-      #astroid.Or: self.convert_or,
-      #astroid.Not: self.convert_not,
       astroid.node_classes.Compare: self.convert_comparison,
       astroid.Slice: self.convert_slice,
       astroid.Name: self.convert_name,
@@ -68,11 +57,7 @@ class PythonToMoo:
       astroid.node_classes.AssignName: self.convert_assign_name,
       astroid.AugAssign: self.convert_aug_assign,
       astroid.BinOp: self.convert_bin_op,
-      #astroid.Add: self.convert_add,
-      #astroid.Sub: self.convert_sub,
-      #astroid.Mult: self.convert_mult,
-      #astroid.Div: self.convert_div,
-      #astroid.Mod: self.convert_mod,
+
       #astroid.Num: self.convert_num,
       astroid.List: self.convert_list,
       astroid.Subscript: self.convert_subscript,
@@ -178,24 +163,6 @@ class PythonToMoo:
       logger.debug("Found converter %r", converter)
       converter(node, )
 
-  def convert_eq(self, node):
-    self.output.write("==")
-
-  def convert_not_eq(self, node):
-    self.output.write("!=")
-
-  def convert_lt(self, node):
-    self.output.write("<")
-
-  def convert_gt(self, node):
-    self.output.write(">")
-
-  def convert_gte(self, node):
-    self.output.write(">=")
-
-  def convert_lte(self, node):
-    self.output.write("<=")
-
   def convert_and(self, node):
     self.output.write("&&")
 
@@ -213,7 +180,7 @@ class PythonToMoo:
       self.convert_node(subop)
 
   def convert_name(self, node):
-    new_name = self.transform_name(node.as_string())
+    new_name = self.transform_name(node.name)
     self.output.write(new_name)
 
   @staticmethod
@@ -258,21 +225,6 @@ class PythonToMoo:
     self.convert_node(node.op)
     self.output.write(" ")
     self.convert_node(node.right)
-
-  def convert_add(self, node):
-    self.output.write("+")
-
-  def convert_sub(self, node):
-    self.output.write("-")
-
-  def convert_mult(self, node):
-    self.output.write("*")
-
-  def convert_div(self, node):
-    self.output.write("/")
-
-  def convert_mod(self, node):
-    self.output.write("%")
 
   def convert_str(self, node):
     self.output.write("\"" + node.s + "\"")
