@@ -32,6 +32,8 @@ def load_ast(fname):
 class Context:
   current_obj = attr(default=None)
   verb = attr(default=None)
+  in_function_call = attr(default=False)
+
 
 @attributes
 class PythonToMoo:
@@ -223,6 +225,7 @@ class PythonToMoo:
 
   def convert_assign_name(self, node):
     self.output.write(node.name)
+
   def convert_aug_assign(self, node):
     self.convert_node(node.target)
     self.output.write(" = ")
@@ -300,11 +303,16 @@ class PythonToMoo:
 
   def convert_attribute(self, node):
     self.convert_node(node.expr)
-    self.output.write(".")
+    if self.context.in_function_call:
+      self.output.write(":")
+    else:
+      self.output.write(".")
     self.output.write(node.attrname)
 
   def convert_call(self, node):
+    self.context.in_function_call = True
     self.convert_node(node.func)
+    self.context.in_function_call = False
     self.output.write("(")
     if node.args is not None:
       for arg in node.args:
