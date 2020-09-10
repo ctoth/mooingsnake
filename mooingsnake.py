@@ -270,11 +270,9 @@ class PythonToMoo:
 
   def convert_args(self, node):
     positional = node.arguments[:len(node.arguments) - len(node.defaults)]
-    positional = [i for i in positional]
+    positional = [i.name for i in positional]
     defaults = node.arguments[len(positional):]
     defaults = {i : node.defaults[n] for n, i in enumerate(defaults)}
-    if not positional and not defaults:
-      return
     if positional and positional[0] == 'self':
       positional = positional[1:]
     if not positional and not defaults:
