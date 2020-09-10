@@ -66,6 +66,7 @@ class PythonToMoo:
       astroid.BoolOp: self.convert_multi_comparison,
       astroid.Return: self.convert_return,
       astroid.Attribute: self.convert_attribute,
+      astroid.AssignAttr: self.convert_attribute,
       astroid.node_classes.Arguments: self.convert_args,
       astroid.Call: self.convert_call,
       str: self.convert_const,
