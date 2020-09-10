@@ -8,6 +8,7 @@ authors = ["Christopher Toth <q.alpha@gmail.com>, NicklasTegner <NicklasMCHD@liv
 python = "^3.7"
 attrs = "^20.2.0"
 pytest = "^6.0.1"
+astroid = "^2.4.2"
 
 [tool.poetry.dev-dependencies]
 

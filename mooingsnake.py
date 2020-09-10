@@ -1,5 +1,5 @@
 import argparse
-import ast
+import astroid
 import io
 import os
 import pdb
@@ -26,7 +26,7 @@ transformations_table = {
 def load_ast(fname):
   with open(fname) as f:
     code = f.read()
-  return ast.parse(code)
+  return astroid.parse(code)
 
 @attributes
 class Context:
@@ -42,45 +42,46 @@ class PythonToMoo:
   def __attrs_post_init__(self):
     """Register converters here"""
     self.converters = {
-      ast.ClassDef: self.convert_obj,
-      ast.FunctionDef: self.convert_verb,
-      ast.While: self.convert_while,
-      ast.If: self.convert_if,
-      ast.For: self.convert_for,
-      ast.Break: self.convert_break,
-      ast.Continue: self.convert_continue,
-      ast.NameConstant: self.convert_const,
-      ast.Eq: self.convert_eq,
-      ast.NotEq: self.convert_not_eq,
-      ast.Lt: self.convert_lt,
-      ast.LtE: self.convert_lte,
-      ast.Gt: self.convert_gt,
-      ast.GtE: self.convert_gte,
-      ast.Is: self.convert_eq, # for now
-      ast.IsNot: self.convert_not_eq, # for now
-      ast.And: self.convert_and,
-      ast.Or: self.convert_or,
-      ast.Not: self.convert_not,
-      ast.Compare: self.convert_comparison,
-      ast.Slice: self.convert_slice,
-      ast.Name: self.convert_name,
-      ast.Assign: self.convert_assign,
-      ast.AugAssign: self.convert_aug_assign,
-      ast.BinOp: self.convert_bin_op,
-      ast.Add: self.convert_add,
-      ast.Sub: self.convert_sub,
-      ast.Mult: self.convert_mult,
-      ast.Div: self.convert_div,
-      ast.Mod: self.convert_mod,
-      ast.Str: self.convert_str,
-      ast.Num: self.convert_num,
-      ast.List: self.convert_list,
-      ast.Subscript: self.convert_subscript,
-      ast.BoolOp: self.convert_multi_comparison,
-      ast.Return: self.convert_return,
-      ast.Attribute: self.convert_attribute,
-      ast.arguments: self.convert_args,
-      ast.Call: self.convert_call,
+      astroid.ClassDef: self.convert_obj,
+      astroid.FunctionDef: self.convert_verb,
+      astroid.While: self.convert_while,
+      astroid.If: self.convert_if,
+      astroid.For: self.convert_for,
+      astroid.Break: self.convert_break,
+      astroid.Continue: self.convert_continue,
+      astroid.node_classes.Const: self.convert_const,
+      #astroid.Eq: self.convert_eq,
+      #astroid.NotEq: self.convert_not_eq,
+      #astroid.Lt: self.convert_lt,
+      #astroid.LtE: self.convert_lte,
+      #astroid.Gt: self.convert_gt,
+      #astroid.GtE: self.convert_gte,
+      #astroid.Is: self.convert_eq, # for now
+      #astroid.IsNot: self.convert_not_eq, # for now
+      #astroid.And: self.convert_and,
+      #astroid.Or: self.convert_or,
+      #astroid.Not: self.convert_not,
+      astroid.node_classes.Compare: self.convert_comparison,
+      astroid.Slice: self.convert_slice,
+      astroid.Name: self.convert_name,
+      astroid.Assign: self.convert_assign,
+      astroid.node_classes.AssignName: self.convert_assign_name,
+      astroid.AugAssign: self.convert_aug_assign,
+      astroid.BinOp: self.convert_bin_op,
+      #astroid.Add: self.convert_add,
+      #astroid.Sub: self.convert_sub,
+      #astroid.Mult: self.convert_mult,
+      #astroid.Div: self.convert_div,
+      #astroid.Mod: self.convert_mod,
+      #astroid.Num: self.convert_num,
+      astroid.List: self.convert_list,
+      astroid.Subscript: self.convert_subscript,
+      astroid.BoolOp: self.convert_multi_comparison,
+      astroid.Return: self.convert_return,
+      astroid.Attribute: self.convert_attribute,
+      astroid.node_classes.Arguments: self.convert_args,
+      astroid.Call: self.convert_call,
+      str: self.convert_const,
     }
 
   def convert_verb(self, node):
@@ -148,15 +149,26 @@ class PythonToMoo:
     self.output.write("continue;\n")
 
   def convert_const(self, node):
-    value = node.value
+    if isinstance(node, str):
+      value = node
+    else:
+      value = node.value
     if value is True:
       self.output.write('true');
     elif value is False:
       self.output.write("false");
     elif value is None:
       self.output.write("$nothing")
+    elif value is "and":
+      self.output.write("&&")
+    elif value is "or":
+      self.output.write("||")
+    elif value is "is":
+      self.output.write("==")
+    elif value is "not":
+      self.output.write("!")
     else:
-      raise RuntimeError("Don't know how to write value %r" % value)
+      self.output.write(str(value))
 
   def convert_node(self, node):
     node_type = type(node)
@@ -196,14 +208,12 @@ class PythonToMoo:
   def convert_comparison(self, node):
     self.convert_node(node.left)
     self.output.write(" ")
-    for subop in node.ops:
-      for subnode in node.comparators:
-        self.convert_node(subop)
-        self.output.write(" ")
-        self.convert_node(subnode)
+    for comp_type, subop in node.ops:
+      self.output.write(comp_type)
+      self.convert_node(subop)
 
   def convert_name(self, node):
-    new_name = self.transform_name(node.id)
+    new_name = self.transform_name(node.as_string())
     self.output.write(new_name)
 
   @staticmethod
@@ -232,6 +242,8 @@ class PythonToMoo:
       self.convert_node(node.value)
       self.output.write(";\n")
 
+  def convert_assign_name(self, node):
+    self.output.write(node.name)
   def convert_aug_assign(self, node):
     self.convert_node(node.target)
     self.output.write(" = ")
@@ -282,7 +294,7 @@ class PythonToMoo:
     self.output.write("]")
 
   def convert_slice(self, node):
-    if hasattr(node, 'value') and type(node.value) == ast.Num:
+    if hasattr(node, 'value') and type(node.value) == astroid.Num:
      self.output.write(node.value.n + 1)
     else:
      self.default_converter(node)
@@ -302,6 +314,12 @@ class PythonToMoo:
     self.output.write(";\n")
 
   def convert_args(self, node):
+    if len(node.arguments) == 0:
+      return
+    else:
+      for arg in node.arguments:
+        self.convert_node(arg)
+    """
     positional = node.args[:len(node.args) - len(node.defaults)]
     positional = [i.arg for i in positional]
     defaults = node.args[len(positional):]
@@ -321,6 +339,7 @@ class PythonToMoo:
       self.output.write("?" + d + "=")
       self.convert_node(subnode)
     self.output.write("} = args;\n")
+    """
 
   def convert_attribute(self, node):
     self.convert_node(node.value)
@@ -330,12 +349,14 @@ class PythonToMoo:
   def convert_call(self, node):
     self.convert_node(node.func)
     self.output.write("(")
-    for arg in node.args:
-      self.convert_node(arg)
-      self.output.write(", ")
-    for kwarg in node.keywords:
-      self.convert_node(kwarg.value)
-      self.output.write(", ")
+    if node.args is not None:
+      for arg in node.args:
+        self.convert_node(arg)
+        self.output.write(", ")
+    if node.keywords is not None:
+      for kwarg in node.keywords:
+        self.convert_node(kwarg.value)
+        self.output.write(", ")
     self.output.write(")")
 
   def default_converter(self, node):
