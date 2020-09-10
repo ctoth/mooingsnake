@@ -179,8 +179,17 @@ class PythonToMoo:
     self.convert_node(node.left)
     self.output.write(" ")
     for comp_type, subop in node.ops:
-      self.output.write(comp_type)
+      self.output.write(self.convert_comp_op(comp_type))
       self.convert_node(subop)
+
+  @staticmethod
+  def convert_comp_op(op):
+    transforms = {
+      "is": "==",
+      "is not": "!=",
+    }
+    op = transforms.get(op, op)
+    return " " + op + " "
 
   def convert_name(self, node):
     new_name = self.transform_name(node.name)
