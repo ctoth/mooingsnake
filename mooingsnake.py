@@ -153,7 +153,10 @@ class PythonToMoo:
     elif value is "not":
       self.output.write("!")
     else:
-      self.output.write(str(value))
+      if isinstance(value, str):
+        self.output.write("\""+str(value)+"\"")
+      else:
+        self.output.write(str(value))
 
   def convert_node(self, node):
     node_type = type(node)
@@ -266,16 +269,10 @@ class PythonToMoo:
     self.output.write(";\n")
 
   def convert_args(self, node):
-    if len(node.arguments) == 0:
-      return
-    else:
-      for arg in node.arguments:
-        self.convert_node(arg)
-    """
-    positional = node.args[:len(node.args) - len(node.defaults)]
-    positional = [i.arg for i in positional]
-    defaults = node.args[len(positional):]
-    defaults = {i.arg : node.defaults[n] for n, i in enumerate(defaults)}
+    positional = node.arguments[:len(node.arguments) - len(node.defaults)]
+    positional = [i for i in positional]
+    defaults = node.arguments[len(positional):]
+    defaults = {i : node.defaults[n] for n, i in enumerate(defaults)}
     if not positional and not defaults:
       return
     if positional and positional[0] == 'self':
@@ -284,14 +281,15 @@ class PythonToMoo:
       return
     self.output.write("{")
     for n, p in enumerate(positional):
-      self.output.write(p)
+      self.convert_node(p)
       if n < len(positional) - 1:
         self.output.write(", ")
     for d, subnode in defaults.items():
-      self.output.write("?" + d + "=")
+      self.output.write("?")
+      self.convert_node(d)
+      self.output.write("=")
       self.convert_node(subnode)
     self.output.write("} = args;\n")
-    """
 
   def convert_attribute(self, node):
     self.convert_node(node.expr)

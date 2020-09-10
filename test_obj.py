@@ -11,7 +11,7 @@ class Test(object):
 
   def do_test_message():
     return test_message(message="it works")
-  def test_message(message):
+  def test_message(message="default message"):
     return message
 
   def test_builtins():
