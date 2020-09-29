@@ -20,7 +20,9 @@ transformations_table = {
   'self': 'this',
   'str': 'tostr',
   'float': 'tofloat',
+  'int': 'toint',
   'len': 'length',
+  'print': 'player:tell',
 }
 
 def load_ast(fname):
@@ -58,10 +60,12 @@ class PythonToMoo:
       astroid.Assign: self.convert_assign,
       astroid.node_classes.AssignName: self.convert_assign_name,
       astroid.AugAssign: self.convert_aug_assign,
+      astroid.Expr: self.convert_expr,
       astroid.BinOp: self.convert_bin_op,
 
       #astroid.Num: self.convert_num,
       astroid.List: self.convert_list,
+      astroid.Dict: self.convert_dict,
       astroid.Subscript: self.convert_subscript,
       astroid.BoolOp: self.convert_multi_comparison,
       astroid.Return: self.convert_return,
@@ -69,7 +73,6 @@ class PythonToMoo:
       astroid.AssignAttr: self.convert_attribute,
       astroid.node_classes.Arguments: self.convert_args,
       astroid.Call: self.convert_call,
-      str: self.convert_const,
     }
 
   def convert_verb(self, node):
@@ -78,28 +81,28 @@ class PythonToMoo:
     default_args = DEFAULT_VERB_ARGS
     default_perms = DEFAULT_VERB_PERMS
     self.context.verb = verb_name
-    self.output.write("@verb {obj_name}:{verb_name} {default_args} {default_perms}\n".format(**locals()))
-    self.output.write("@program {obj_name}:{verb_name}\n".format(**locals()))
+    self.write("@verb {obj_name}:{verb_name} {default_args} {default_perms}\n".format(**locals()))
+    self.write("@program {obj_name}:{verb_name}\n".format(**locals()))
     self.convert_node(node.args)
     for subnode in node.body:
       self.convert_node(subnode, )
-    self.output.write(".\n")
+    self.write(".\n")
     self.context.verb = ""
 
   def convert_obj(self, node):
     class_name = node.name
-    self.output.write("@create #1 named {class_name}\n".format(**locals()))
+    self.write("@create #1 named {class_name}\n".format(**locals()))
     self.context.current_obj = class_name
     for subnode in node.body:
       self.convert_node(subnode)
 
   def convert_scoped_node(self, node, start_token, end_token):
-    self.output.write(start_token + " (")
+    self.write(start_token + " (")
     self.convert_node(node.test, )
-    self.output.write(")\n")
+    self.write(")\n")
     for subnode in node.body:
       self.convert_node(subnode, )
-    self.output.write(end_token + "\n")
+    self.write(end_token + "\n")
 
   def convert_while(self, node):
     if self.context.current_obj is None and self.context.verb is None:
@@ -120,42 +123,40 @@ class PythonToMoo:
       raise RuntimeError("for loop not supported out of class or function.")
     if self.context.verb is None:
       raise RuntimeError("For loop not supported out of function call.")
-    self.output.write("for ")
+    self.write("for ")
     self.convert_node(node.target)
-    self.output.write(" in ")
-    self.output.write("(")
+    self.write(" in ")
+    self.write("(")
     self.convert_node(node.iter)
-    self.output.write(")\n")
+    self.write(")\n")
     for subnode in node.body:
       self.convert_node(subnode, )
-    self.output.write("endfor\n")
+    self.write("endfor\n")
 
   def convert_break(self, node):
-    self.output.write("break;\n")
+    self.write("break;\n")
 
   def convert_continue(self, node):
-    self.output.write("continue;\n")
+    self.write("continue;\n")
 
   def convert_const(self, node):
-    if isinstance(node, str):
-      value = node
-    else:
-      value = node.value
+    value = node.value
     if value is True:
-      self.output.write('true');
+      self.write('true');
     elif value is False:
-      self.output.write("false");
+      self.write("false");
     elif value is None:
-      self.output.write("$nothing")
+      self.write("$nothing")
     elif value is "and":
-      self.output.write("&&")
+      self.write("&&")
     elif value is "or":
-      self.output.write("||")
+      self.write("||")
     else:
       if isinstance(value, str):
-        self.output.write("\""+str(value)+"\"")
+        to_write = b"\"" + value.encode("unicode_escape") + b"\""
+        self.write(to_write.decode('UTF-8'))
       else:
-        self.output.write(str(value))
+        self.write(str(value))
 
   def convert_node(self, node):
     node_type = type(node)
@@ -166,19 +167,18 @@ class PythonToMoo:
       converter(node, )
 
   def convert_and(self, node):
-    self.output.write("&&")
+    self.write("&&")
 
   def convert_or(self, node):
-    self.output.write("||")
+    self.write("||")
 
   def convert_not(self, node):
-    self.output.write("!")
+    self.write("!")
 
   def convert_comparison(self, node):
     self.convert_node(node.left)
-    self.output.write(" ")
     for comp_type, subop in node.ops:
-      self.output.write(self.convert_comp_op(comp_type))
+      self.write(self.convert_comp_op(comp_type))
       self.convert_node(subop)
 
   @staticmethod
@@ -192,7 +192,7 @@ class PythonToMoo:
 
   def convert_name(self, node):
     new_name = self.transform_name(node.name)
-    self.output.write(new_name)
+    self.write(new_name)
 
   @staticmethod
   def transform_name(name):
@@ -204,82 +204,106 @@ class PythonToMoo:
     else:
       for target in node.targets:
         self.convert_node(target)
-        self.output.write(" = ")
+        self.write(" = ")
       self.convert_node(node.value)
-      self.output.write(";\n")
+      self.write(";\n")
 
   def add_property(self, node):
     obj = self.context.current_obj
     for prop in node.targets:
-      self.output.write("@property {obj}.".format(**locals()))
+      self.write("@property {obj}.".format(**locals()))
       self.convert_node(prop)
-      self.output.write("\n")
-      self.output.write(";{obj}.".format(**locals()))
+      self.write("\n")
+      self.write(";{obj}.".format(**locals()))
       self.convert_node(prop)
-      self.output.write(" = ")
+      self.write(" = ")
       self.convert_node(node.value)
-      self.output.write(";\n")
+      self.write(";\n")
 
   def convert_assign_name(self, node):
-    self.output.write(node.name)
+    self.write(node.name)
 
   def convert_aug_assign(self, node):
     self.convert_node(node.target)
-    self.output.write(" = ")
+    self.write(" = ")
     self.convert_node(node.target)
     self.convert_node(node.op)
     self.convert_node(node.value)
-    self.output.write(";\n");
+    self.write(";\n");
 
   def convert_bin_op(self, node):
     self.convert_node(node.left)
-    self.output.write(" ")
-    self.convert_node(node.op)
-    self.output.write(" ")
+    self.write(" ")
+    self.write(node.op)
+    self.write(" ")
     self.convert_node(node.right)
 
   def convert_str(self, node):
-    self.output.write("\"" + node.s + "\"")
+    self.write(node.s.encode("unicode_escape"))
+
+  def convert_expr(self, node):
+    self.convert_node(node.value)
+    self.write(";\n")
+
 
   def convert_num(self, node):
-    self.output.write(str(node.n))
+    self.write(str(node.n))
 
   def convert_list(self, node):
     if not node.elts:
-      self.output.write("{}")
+      self.write("{}")
       return
-    self.output.write("{")
+    self.write("{")
     for elt in node.elts[:-1]:
       self.convert_node(elt)
-      self.output.write(", ")
+      self.write(", ")
     self.convert_node(node.elts[-1])
-    self.output.write("}")
+    self.write("}")
+
+  def convert_dict(self, node):
+    if not node.items:
+      self.write("[]")
+      return
+    self.write("[")
+    n = 0;
+    for key, value in node.items:
+      n += 1;
+      self.convert_node(key)
+      self.write(" -> ")
+      self.convert_node(value)
+      if n < len(node.items):
+        self.write(", ")
+    self.write("]")
 
   def convert_subscript(self, node):
     self.convert_node(node.value)
-    self.output.write("[")
+    self.write("[")
     self.convert_node(node.slice)
-    self.output.write("]")
+    self.write("]")
 
   def convert_slice(self, node):
     self.convert_node(node.lower)
     if node.upper:
-      self.output.write(":")
+      self.write(":")
       self.convert_node(node.upper)
 
   def convert_multi_comparison(self, node):
-    self.output.write("(")
+    self.write("(")
     self.convert_node(node.values[0])
-    self.output.write(")")
-    self.convert_node(node.op)
-    self.output.write("(")
+    self.write(") ")
+    self.write_op(node.op)
+    self.write("(")
     self.convert_node(node.values[1])
-    self.output.write(")")
+    self.write(")")
+
+  def write_op(self, op):
+    transforms = {'or': '||', 'not': '!', 'and': '&&'}
+    self.write(transforms.get(op, op))
 
   def convert_return(self, node):
-    self.output.write("return ")
+    self.write("return ")
     self.convert_node(node.value)
-    self.output.write(";\n")
+    self.write(";\n")
 
   def convert_args(self, node):
     positional = node.arguments[:len(node.arguments) - len(node.defaults)]
@@ -290,25 +314,28 @@ class PythonToMoo:
       positional = positional[1:]
     if not positional and not defaults:
       return
-    self.output.write("{")
+    self.write("{")
     for n, p in enumerate(positional):
-      self.convert_node(p)
-      if n < len(positional) - 1:
-        self.output.write(", ")
-    for d, subnode in defaults.items():
-      self.output.write("?")
-      self.convert_node(d)
-      self.output.write("=")
-      self.convert_node(subnode)
-    self.output.write("} = args;\n")
+      self.write(p)
+      if n < len(positional) - 1 and not defaults:
+        self.write(", ")
+    for n, what in enumerate(defaults.items()):
+      arg_name, arg_value = what
+      self.write("?")
+      self.convert_node(arg_name)
+      self.write("=")
+      self.convert_node(arg_value)
+      if n < len(defaults) - 1:
+        self.write(", ")
+    self.write("} = args;\n")
 
   def convert_attribute(self, node):
     self.convert_node(node.expr)
     if self.context.in_function_call:
-      self.output.write(":")
+      self.write(":")
     else:
-      self.output.write(".")
-    self.output.write(node.attrname)
+      self.write(".")
+    self.write(node.attrname)
 
   def convert_call(self, node):
     self.context.in_function_call = True
@@ -320,14 +347,14 @@ class PythonToMoo:
     if node.keywords is not None:
       arguments.extend(i.value for i in node.keywords)
     if not arguments:
-      self.output.write("()");
+      self.write("()");
       return
-    self.output.write("(")
+    self.write("(")
     for arg in arguments[:-1]:
       self.convert_node(arg)
-      self.output.write(", ")
+      self.write(", ")
     self.convert_node(arguments[-1])
-    self.output.write(")")
+    self.write(")")
 
   def default_converter(self, node):
     if self.debug:
@@ -339,6 +366,15 @@ class PythonToMoo:
     new = cls(output, debug=debug)
     for node in loaded.body:
       new.convert_node(node)
+
+  def write(self, string):
+    self.output.write(string)
+
+  def write_comma_separated(self, node_list):
+    for node in node_list[:-1]:
+      self.convert_node(node)
+      self.write(", ")
+    self.convert_node(node_list[-1])
 
 def main(args):
   if os.path.isfile(args.input) == False:
