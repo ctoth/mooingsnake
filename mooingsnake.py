@@ -23,6 +23,8 @@ transformations_table = {
   'int': 'toint',
   'len': 'length',
   'print': 'player:tell',
+  'TypeError': 'E_TYPE',
+  'sum': '$math_utils:sum',
 }
 
 def load_ast(fname):
@@ -57,6 +59,7 @@ class PythonToMoo:
       astroid.node_classes.Compare: self.convert_comparison,
       astroid.Slice: self.convert_slice,
       astroid.Name: self.convert_name,
+      astroid.Raise: self.convert_raise,
       astroid.Assign: self.convert_assign,
       astroid.node_classes.AssignName: self.convert_assign_name,
       astroid.AugAssign: self.convert_aug_assign,
@@ -65,6 +68,7 @@ class PythonToMoo:
 
       #astroid.Num: self.convert_num,
       astroid.List: self.convert_list,
+      astroid.Tuple: self.convert_list,
       astroid.Dict: self.convert_dict,
       astroid.Subscript: self.convert_subscript,
       astroid.BoolOp: self.convert_multi_comparison,
@@ -194,6 +198,12 @@ class PythonToMoo:
     new_name = self.transform_name(node.name)
     self.write(new_name)
 
+  def convert_raise(self, node):
+    self.output.write("raise (")
+    self.convert_node(node.exc.func)
+    self.write(");\n")
+
+
   @staticmethod
   def transform_name(name):
     return transformations_table.get(name, name)
@@ -227,7 +237,7 @@ class PythonToMoo:
     self.convert_node(node.target)
     self.write(" = ")
     self.convert_node(node.target)
-    self.convert_node(node.op)
+    self.write(" " + node.op[0] + " ")
     self.convert_node(node.value)
     self.write(";\n");
 
