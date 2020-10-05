@@ -37,6 +37,7 @@ class Context:
   current_obj = attr(default=None)
   verb = attr(default=None)
   in_function_call = attr(default=False)
+  in_index = attr(default=False)
 
 
 @attributes
@@ -77,6 +78,11 @@ class PythonToMoo:
       astroid.AssignAttr: self.convert_attribute,
       astroid.node_classes.Arguments: self.convert_args,
       astroid.Call: self.convert_call,
+      astroid.Index: self.convert_index,
+    }
+    self.const_converters = {
+      'builtins.int': self.convert_const_int,
+      'builtins.str': self.convert_const_str,
     }
 
   def convert_verb(self, node):
@@ -156,11 +162,22 @@ class PythonToMoo:
     elif value is "or":
       self.write("||")
     else:
-      if isinstance(value, str):
-        to_write = b"\"" + value.encode("unicode_escape") + b"\""
-        self.write(to_write.decode('UTF-8'))
+      converter = self.const_converters.get(node.pytype())
+      if converter:
+        return converter(node)
       else:
+        logger.warn("Falling back to default converter")
         self.write(str(value))
+
+  def convert_const_int(self, node):
+    value = int(node.value)
+    if self.context.in_index:
+      value += 1
+    self.write(value)
+
+  def convert_const_str(self, node):
+    to_write = b"\"" + node.value.encode("unicode_escape") + b"\""
+    self.write(to_write.decode('UTF-8'))
 
   def convert_node(self, node):
     node_type = type(node)
@@ -180,6 +197,7 @@ class PythonToMoo:
     self.write("!")
 
   def convert_comparison(self, node):
+    import pdb; pdb.set_trace()
     self.convert_node(node.left)
     for comp_type, subop in node.ops:
       self.write(self.convert_comp_op(comp_type))
@@ -244,7 +262,7 @@ class PythonToMoo:
   def convert_bin_op(self, node):
     self.convert_node(node.left)
     self.write(" ")
-    self.write(node.op)
+    self.write_op(node.op)
     self.write(" ")
     self.convert_node(node.right)
 
@@ -254,7 +272,6 @@ class PythonToMoo:
   def convert_expr(self, node):
     self.convert_node(node.value)
     self.write(";\n")
-
 
   def convert_num(self, node):
     self.write(str(node.n))
@@ -294,7 +311,7 @@ class PythonToMoo:
   def convert_slice(self, node):
     self.convert_node(node.lower)
     if node.upper:
-      self.write(":")
+      self.write("..")
       self.convert_node(node.upper)
 
   def convert_multi_comparison(self, node):
@@ -327,7 +344,7 @@ class PythonToMoo:
     self.write("{")
     for n, p in enumerate(positional):
       self.write(p)
-      if n < len(positional) - 1 and not defaults:
+      if n < len(positional) - 1 or defaults:
         self.write(", ")
     for n, what in enumerate(defaults.items()):
       arg_name, arg_value = what
@@ -366,6 +383,11 @@ class PythonToMoo:
     self.convert_node(arguments[-1])
     self.write(")")
 
+  def convert_index(self, node):
+    self.context.in_index = True
+    self.convert_node(node.value)
+    self.context.in_index = False
+
   def default_converter(self, node):
     if self.debug:
       pdb.set_trace()
@@ -378,7 +400,7 @@ class PythonToMoo:
       new.convert_node(node)
 
   def write(self, string):
-    self.output.write(string)
+    self.output.write(str(string))
 
   def write_comma_separated(self, node_list):
     for node in node_list[:-1]:
