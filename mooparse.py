@@ -21,6 +21,12 @@ class MooGrammar(Grammar):
   k_break = Keyword('break')
   k_continue = Keyword('continue')
   k_return = Keyword('return')
+  k_fork = Keyword('fork')
+  k_endfork = Keyword('endfork')
+  k_try = Keyword('try')
+  k_endtry = Keyword('endtry')
+  k_except = Keyword('except')
+  k_finally = Keyword('finally')
   # Tokens
   t_equals = Token('=')
   t_lparen = Token('(')
@@ -56,9 +62,12 @@ class MooGrammar(Grammar):
   COMPARISON = Sequence(t_lparen, List(EXPRESSION, delimiter=COMP_TOKENS), t_rparen)
   ASSIGNMENT = Sequence(Choice(PROP_REF, r_var, SUBSCRIPT), t_equals, EXPRESSION)
   WHILE_LOOP = Sequence(k_while, COMPARISON, Optional(START), Optional(k_break), Optional(k_continue), k_endwhile)
-  FOR_CONDITION = Sequence(r_var, k_in, t_lparen, EXPRESSION, t_rparen)
+  FOR_CONDITION = Sequence(Choice(r_var, List(r_var, mi=2)), k_in, t_lparen, EXPRESSION, t_rparen)
   FOR_LOOP = Sequence(k_for, FOR_CONDITION, Optional(START), Optional(k_break), Optional(k_continue), k_endfor)
   CONDITIONAL = Sequence(k_if, COMPARISON, Optional(START), Optional(Sequence(k_elseif, COMPARISON, Optional(START))), Optional(Sequence(k_else, Optional(START))), k_endif)
+  EXCEPTION_HANDLER = Sequence(k_except, Optional(r_var), t_lparen, r_var, t_rparen, Optional(START))
+  TRY = Sequence(k_try, Optional(START), Optional(List(EXCEPTION_HANDLER)), Optional(Sequence(k_finally, Optional(START))), k_endtry)
+  FORK = Sequence(k_fork, Optional(r_var), t_lparen, EXPRESSION, t_rparen, Optional(START), k_endfork)
   EXPRESSION = Choice(ASSIGNMENT,BIN_OP, VALUE, SUBSCRIPT)
   CALL_ARGS = List(EXPRESSION)
   OPTIONAL_ARG = Sequence(t_question, r_var, t_equals, EXPRESSION)
@@ -70,7 +79,7 @@ class MooGrammar(Grammar):
   TERNARY = Sequence(EXPRESSION, t_question, EXPRESSION, t_bar, EXPRESSION)
   RETURN = Sequence(k_return, EXPRESSION)
   STATEMENT = Sequence(Choice(RETURN, ASSIGNMENT, VERB_CALL, FUNCTION_CALL, TERNARY, SCATTER_ASSIGNMENT), t_semi)
-  START = Repeat(Choice(CONDITIONAL, WHILE_LOOP, FOR_LOOP, STATEMENT, Sequence(r_string, t_semi)))
+  START = Repeat(Choice(CONDITIONAL, WHILE_LOOP, FOR_LOOP, TRY, FORK, STATEMENT, Sequence(r_string, t_semi)))
 
 
 def walk(root):
@@ -148,4 +157,4 @@ if __name__ == '__main__':
   print(result)
   data = view_parse_tree(result)
   import json
-  #print(json.dumps(data, indent=2))
+  print(json.dumps(data, indent=2))
