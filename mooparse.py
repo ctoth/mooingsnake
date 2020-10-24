@@ -3,7 +3,7 @@ from pyleri import Choice, Grammar, Keyword, List, Optional, Regex, Prio, Ref, R
 class MooGrammar(Grammar):
   START = Ref()
   # Types we need regular expressions for
-  r_int = Regex('[0-9]+')
+  r_int = Regex('-?[0-9]+')
   r_string = Regex(r'(")(?:(?=(\\?))\2.)*?\1')
   r_float = Regex(r'-?[0-9]+\.?[0-9]+')
   r_var = Regex(r'\$?[a-zA-Z_][a-zA-Z0-9_]*')
@@ -27,6 +27,7 @@ class MooGrammar(Grammar):
   k_endtry = Keyword('endtry')
   k_except = Keyword('except')
   k_finally = Keyword('finally')
+  k_any = Keyword('ANY')
   # Tokens
   t_equals = Token('=')
   t_lparen = Token('(')
@@ -39,7 +40,11 @@ class MooGrammar(Grammar):
   t_question = Token('?')
   t_bar = Token('|')
   t_arrow = Token('->')
+  t_grave = Token('`')
+  t_exclamation = Token('!')
+  t_eg = Token('=>')
   t_colon = Token(':')
+  t_tick = Token("'")
   t_semi = Token(';')
   # Forward References
   FUNCTION_CALL = Ref()
@@ -70,8 +75,9 @@ class MooGrammar(Grammar):
   CONDITIONAL = Sequence(k_if, t_lparen, MULTI_COMPARISON, t_rparen, Optional(START), Optional(Sequence(k_elseif, COMPARISON, Optional(START))), Optional(Sequence(k_else, Optional(START))), k_endif)
   EXCEPTION_HANDLER = Sequence(k_except, Optional(r_var), t_lparen, r_var, t_rparen, Optional(START))
   TRY = Sequence(k_try, Optional(START), Optional(List(EXCEPTION_HANDLER)), Optional(Sequence(k_finally, Optional(START))), k_endtry)
+  COMPACT_TRY = Sequence(t_grave, EXPRESSION, t_exclamation, Choice(k_any, EXPRESSION), Optional(Sequence(t_eg, EXPRESSION)), t_tick)
   FORK = Sequence(k_fork, Optional(r_var), t_lparen, EXPRESSION, t_rparen, Optional(START), k_endfork)
-  EXPRESSION = Choice(ASSIGNMENT,BIN_OP, VALUE, SUBSCRIPT)
+  EXPRESSION = Choice(ASSIGNMENT,BIN_OP, VALUE, SUBSCRIPT, COMPACT_TRY)
   CALL_ARGS = List(EXPRESSION)
   OPTIONAL_ARG = Sequence(t_question, ASSIGNMENT)
   SCATTER_NAMES = Sequence(t_lbrace, List(Choice(r_var, OPTIONAL_ARG)), t_rbrace)
