@@ -5,6 +5,7 @@ subscript_assignment = 'a["b"] = 1;'
 ternary = 'a==1? 1 | 0;'
 nested_ops = "a=(b-c)*(b*c)-d;"
 scatter_assignment = '{a, b, ?c=3} = args;'
+complex_scatter_assignment = '{sender, recipient, message, verbatim, ?format = this.options["format"], ?Extra = []} = args;'
 fork = """\
 fork tasky (5)
 player:tell("Ran in a fork!");
@@ -26,6 +27,7 @@ def test_ternary():
 
 def test_scatter_assignment():
   assert grammar.parse(scatter_assignment).is_valid
+  assert grammar.parse(complex_scatter_assignment).is_valid
 
 def test_fork():
   assert grammar.parse(fork).is_valid
