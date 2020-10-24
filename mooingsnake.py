@@ -112,6 +112,10 @@ class PythonToMoo:
     self.write(")\n")
     for subnode in node.body:
       self.convert_node(subnode, )
+    if node.orelse:
+      self.write("else\n")
+      for subnode in node.orelse:
+        self.convert_node(subnode)
     self.write(end_token + "\n")
 
   def convert_while(self, node):
@@ -197,7 +201,6 @@ class PythonToMoo:
     self.write("!")
 
   def convert_comparison(self, node):
-    import pdb; pdb.set_trace()
     self.convert_node(node.left)
     for comp_type, subop in node.ops:
       self.write(self.convert_comp_op(comp_type))
