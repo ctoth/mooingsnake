@@ -61,13 +61,16 @@ class MooGrammar(Grammar):
   CONDITIONAL = Sequence(k_if, COMPARISON, Optional(START), Optional(Sequence(k_elseif, COMPARISON, Optional(START))), Optional(Sequence(k_else, Optional(START))), k_endif)
   EXPRESSION = Choice(ASSIGNMENT,BIN_OP, VALUE, SUBSCRIPT)
   CALL_ARGS = List(EXPRESSION)
+  OPTIONAL_ARG = Sequence(t_question, r_var, t_equals, EXPRESSION)
+  SCATTER_NAMES = Sequence(t_lbrace, List(Choice(r_var, OPTIONAL_ARG)), t_rbrace)
+  SCATTER_ASSIGNMENT = Sequence(SCATTER_NAMES, t_equals, EXPRESSION);
   FUNCTION_CALL = Sequence(r_var, t_lparen, Optional(CALL_ARGS), t_rparen)
   VERB_CALL = Sequence(r_var, t_colon, Choice(r_var, Sequence(t_lparen, r_string, t_rparen)), t_lparen, Optional(CALL_ARGS), t_rparen)
   SUBSCRIPT = Sequence(Choice(VERB_CALL, FUNCTION_CALL, VALUE), t_lbracket, Choice(VERB_CALL, FUNCTION_CALL, VALUE), t_rbracket)
   TERNARY = Sequence(EXPRESSION, t_question, EXPRESSION, t_bar, EXPRESSION)
   RETURN = Sequence(k_return, EXPRESSION)
-  STATEMENT = Sequence(Choice(RETURN, ASSIGNMENT, VERB_CALL, FUNCTION_CALL, TERNARY), t_semi)
-  START = Repeat(Choice(CONDITIONAL, WHILE_LOOP, FOR_LOOP, STATEMENT))
+  STATEMENT = Sequence(Choice(RETURN, ASSIGNMENT, VERB_CALL, FUNCTION_CALL, TERNARY, SCATTER_ASSIGNMENT), t_semi)
+  START = Repeat(Choice(CONDITIONAL, WHILE_LOOP, FOR_LOOP, STATEMENT, Sequence(r_string, t_semi)))
 
 
 def walk(root):
