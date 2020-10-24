@@ -10,6 +10,8 @@ fork tasky (5)
 player:tell("Ran in a fork!");
 endfork
 """
+multi_comparison = 'if ((a==b) && (c==d) || (frob==1)) endif'
+
 def test_empty_parse_succeeds():
   assert grammar.parse(empty).is_valid
 
@@ -27,6 +29,9 @@ def test_scatter_assignment():
 
 def test_fork():
   assert grammar.parse(fork).is_valid
+
+def test_multi_comparison():
+  assert grammar.parse(multi_comparison).is_valid
 
 def test_nested_ops():
   assert grammar.parse(nested_ops).is_valid
