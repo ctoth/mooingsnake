@@ -7,16 +7,24 @@
   | OBJ_NUM
 
 expression: value
+  | assignment
   | verb_call
   | function_call
+  | subscript
+  | slice
+  | compact_try
   | prop_ref
   | VAR
   | bin_expr
-  | comparison
+  | multi_comparison
+  | "(" expression ")"
+  | NEGATION expression
 
-list : "{" [value ("," value)*] "}"
+NEGATION: "!"
+
+list : "{" [expression ("," expression)*] "}"
 map : "[" [map_item ("," map_item)*] "]"
-map_item : (ESCAPED_STRING | SIGNED_INT | SIGNED_FLOAT | OBJ_NUM) "->" value
+map_item : (ESCAPED_STRING | SIGNED_INT | SIGNED_FLOAT | OBJ_NUM) "->" expression
 OBJ_NUM: "#" SIGNED_INT
 
 prop_ref: (VAR | OBJ_NUM) "." (VAR | "(" ESCAPED_STRING ")")
@@ -29,11 +37,17 @@ break: "break" [VAR]
 continue: "continue" [VAR]
 return: "return" [expression]
 bin_op: ("+" | "-" | "*" | "/" | "^")
-COMP_OP: "<" | ">" | "==" | ">=" | "<=" | "!=" | "in"
+COMP_OP: "==" | ">=" | "<=" | "!=" | "in" | "<" | ">"
 MULTI_COMP_OP: "&&" | "||"
-assignment: (VAR | prop_ref) "=" expression
+assignment: expression "=" expression
+optional_arg: "?" VAR "=" expression
+argument: (VAR | optional_arg)
+scatter_names: "{" [argument ("," argument)*] "}"
+scatter_assignment: scatter_names "=" expression
 bin_expr: expression (bin_op expression)*
-statement: (assignment | expression | return | break | continue)? ";"
+subscript: expression "[" expression "]"
+slice: expression ".." expression
+statement: (scatter_assignment | expression | flow_statement )? ";"
 comparison: expression (COMP_OP expression)*
 multi_comparison: comparison (MULTI_COMP_OP comparison)*
 
@@ -41,9 +55,12 @@ if: "if" "(" multi_comparison ")" start elseif* else? "endif"
 elseif: "elseif" "(" multi_comparison ")" start
 else: "else" start
 
-for: "for" VAR ["," VAR] "in" "(" expression ")" start "endfor"
+for: "for" VAR ["," VAR] "in" (subscript | "(" expression ")") start "endfor"
+while: "while" "(" multi_comparison ")" start "endwhile"
 
-start: (statement | if | for)*
+compact_try: "`" expression "!" ("ANY" | expression) ["=>" expression] "'"
+
+start: (statement | if | for | while)*
 
 %import common.ESCAPED_STRING
 %import common.INT
