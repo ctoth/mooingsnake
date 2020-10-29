@@ -1,0 +1,56 @@
+
+?value: map
+  | list
+  | ESCAPED_STRING
+  | SIGNED_INT
+  | SIGNED_FLOAT
+  | OBJ_NUM
+
+expression: value
+  | verb_call
+  | function_call
+  | prop_ref
+  | VAR
+  | bin_expr
+  | comparison
+
+list : "{" [value ("," value)*] "}"
+map : "[" [map_item ("," map_item)*] "]"
+map_item : (ESCAPED_STRING | SIGNED_INT | SIGNED_FLOAT | OBJ_NUM) "->" value
+OBJ_NUM: "#" SIGNED_INT
+
+prop_ref: (VAR | OBJ_NUM) "." (VAR | "(" ESCAPED_STRING ")")
+VAR: (("_"|"$"|LETTER) ("_"|LETTER|DIGIT)*)
+arg_list : "(" [expression ("," expression)*] ")"
+function_call: VAR arg_list
+verb_call: expression ":" (VAR | "(" ESCAPED_STRING ")") arg_list
+flow_statement: break | continue | return
+break: "break" [VAR]
+continue: "continue" [VAR]
+return: "return" [expression]
+bin_op: ("+" | "-" | "*" | "/" | "^")
+COMP_OP: "<" | ">" | "==" | ">=" | "<=" | "!=" | "in"
+MULTI_COMP_OP: "&&" | "||"
+assignment: (VAR | prop_ref) "=" expression
+bin_expr: expression (bin_op expression)*
+statement: (assignment | expression | return | break | continue)? ";"
+comparison: expression (COMP_OP expression)*
+multi_comparison: comparison (MULTI_COMP_OP comparison)*
+
+if: "if" "(" multi_comparison ")" start elseif* else? "endif"
+elseif: "elseif" "(" multi_comparison ")" start
+else: "else" start
+
+for: "for" VAR ["," VAR] "in" "(" expression ")" start "endfor"
+
+start: (statement | if | for)*
+
+%import common.ESCAPED_STRING
+%import common.INT
+%import common.SIGNED_INT
+%import common.SIGNED_FLOAT
+%import common.WS
+%import common.LETTER
+%import common.DIGIT
+
+%ignore WS
