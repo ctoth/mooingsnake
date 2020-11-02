@@ -12,10 +12,12 @@ expression: value
   | function_call
   | subscript
   | slice
+  | ternary
   | compact_try
   | prop_ref
   | VAR
   | bin_expr
+  | comparison
   | multi_comparison
   | "(" expression ")"
   | NEGATION expression
@@ -39,26 +41,27 @@ return: "return" [expression]
 bin_op: ("+" | "-" | "*" | "/" | "^")
 COMP_OP: "==" | ">=" | "<=" | "!=" | "in" | "<" | ">"
 MULTI_COMP_OP: "&&" | "||"
-assignment: expression "=" expression
+assignment: (VAR | prop_ref | subscript) "=" expression
 optional_arg: "?" VAR "=" expression
 argument: (VAR | optional_arg)
 scatter_names: "{" [argument ("," argument)*] "}"
 scatter_assignment: scatter_names "=" expression
-bin_expr: expression (bin_op expression)*
+bin_expr: expression bin_op expression
 subscript: expression "[" expression "]"
 slice: expression ".." expression
 statement: (scatter_assignment | expression | flow_statement )? ";"
-comparison: expression (COMP_OP expression)*
-multi_comparison: comparison (MULTI_COMP_OP comparison)*
+comparison: expression (COMP_OP expression)+
+multi_comparison: expression (MULTI_COMP_OP expression)+
 
-if: "if" "(" multi_comparison ")" start elseif* else? "endif"
-elseif: "elseif" "(" multi_comparison ")" start
+if: "if" "(" expression ")" start elseif* else? "endif"
+elseif: "elseif" "(" expression ")" start
 else: "else" start
 
-for: "for" VAR ["," VAR] "in" (subscript | "(" expression ")") start "endfor"
-while: "while" "(" multi_comparison ")" start "endwhile"
+for: "for" expression ["," VAR] "in" ("[" expression "]" | "(" expression ")") start "endfor"
+while: "while" "(" expression ")" start "endwhile"
 
 compact_try: "`" expression "!" ("ANY" | expression) ["=>" expression] "'"
+ternary: expression "?" expression "|" expression
 
 start: (statement | if | for | while)*
 
