@@ -42,9 +42,8 @@ bin_op: ("+" | "-" | "*" | "/" | "^")
 COMP_OP: "==" | ">=" | "<=" | "!=" | "in" | "<" | ">"
 MULTI_COMP_OP: "&&" | "||"
 assignment: (VAR | prop_ref | subscript) "=" expression
-optional_arg: "?" VAR "=" expression
-argument: (VAR | optional_arg)
-scatter_names: "{" [argument ("," argument)*] "}"
+default_val: "?" VAR "=" expression
+scatter_names: "{" [(VAR | default_val) ("," (VAR | default_val))*] "}"
 scatter_assignment: scatter_names "=" expression
 bin_expr: expression bin_op expression
 subscript: expression "[" expression "]"
@@ -58,15 +57,16 @@ elseif: "elseif" "(" expression ")" start
 else: "else" start
 
 for: "for" expression ["," VAR] "in" ("[" expression "]" | "(" expression ")") start "endfor"
-while: "while" "(" expression ")" start "endwhile"
+while: "while" VAR? "(" expression ")" start "endwhile"
+try: "try" start [except]* "endtry"
+except: "except" ("ANY" | VAR) ["," VAR] start
 
 compact_try: "`" expression "!" ("ANY" | expression) ["=>" expression] "'"
 ternary: expression "?" expression "|" expression
 
-start: (statement | if | for | while)*
+start: (statement | if | for | while | try)*
 
 %import common.ESCAPED_STRING
-%import common.INT
 %import common.SIGNED_INT
 %import common.SIGNED_FLOAT
 %import common.WS
